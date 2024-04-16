@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nobi.UiRoundedCorners", "Nobi.UiRoundedCorners.csproj", "{534E500D-CA29-1EED-6721-16E2FDBD7DCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{E608580E-128E-E31E-1239-E1C467D994D3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{534E500D-CA29-1EED-6721-16E2FDBD7DCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{534E500D-CA29-1EED-6721-16E2FDBD7DCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{534E500D-CA29-1EED-6721-16E2FDBD7DCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{534E500D-CA29-1EED-6721-16E2FDBD7DCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E608580E-128E-E31E-1239-E1C467D994D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E608580E-128E-E31E-1239-E1C467D994D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E608580E-128E-E31E-1239-E1C467D994D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E608580E-128E-E31E-1239-E1C467D994D3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
