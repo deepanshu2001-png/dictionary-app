@@ -1,282 +1,418 @@
-    using UnityEngine;
-    using UnityEngine.Networking;
-    using UnityEngine.UI;
-    using System.Collections;
-    using System.Collections.Generic;
-    using TMPro;
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEditor.Search;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.UIElements.Experimental;
 
-    public class DictionaryManager : MonoBehaviour
+public class DictionaryManager : MonoBehaviour
+{
+  
+    public string baseUrl = "https://activity-api.aceplus.in/web/dictionary_words";
+    public GameObject wordPanelPrefab;
+    public Transform contentPanel;
+    public Button[] letterButtons; // Array of buttons for each letter from A to Z
+    public TMP_InputField searchInputField;
+    public VerticalLayoutGroup verticalLayoutGroup;
+    private TMP_Text searchResultText;
+    public GameObject horizontalRowPrefab; // Prefab for horizontal row containing 3 boxes
+    public Transform verticalLayoutParent; // Parent transform for vertical layout group
+    public Dictionary<char, int> currentPage = new Dictionary<char, int>();
+    public List<DictionaryEntry> allWords = new List<DictionaryEntry>(); // Store all fetched word entries
+    public float expandedHeight = 130f; // Height to expand the word box to
+    public RectTransform canvasRectTransform; // Reference to the canvas object's RectTransform
+    private Dictionary<char, List<DictionaryEntry>> allWordsDataForLetter = new Dictionary<char, List<DictionaryEntry>>();
+
+
+    private void Awake()
     {
-        public string baseUrl = "https://activity-api.aceplus.in/web/dictionary_words";
-        public GameObject wordPanelPrefab;
-        public Transform contentPanel;
-        public Button[] letterButtons; // Array of buttons for each letter from A to Z
-        public TMP_InputField searchInputField;
-        [SerializeField] private Button seeMoreButton;
-        public GameObject container;
-        public GridLayoutGroup gridLayoutGroup;
-        public float newHeight = 130f; // Set your desired height here
-        public Dictionary<char, int> currentPage = new Dictionary<char, int>();
-        public List<DictionaryEntry> allWords = new List<DictionaryEntry>(); // Store all fetched word entries
-        public void Start()
-        {
-           
-            
-            for (char c = 'a'; c <= 'z'; c++)
-            {
-                currentPage[char.ToLower(c)] = 1; ;
-            }
-            // Initialize currentPage dictionary with default page number for each letter
-            foreach (Button button in letterButtons)
-            {
-                char letter = char.ToLower(button.GetComponentInChildren<TMP_Text>().text[0]); // Ensure lowercase letter
-                button.onClick.AddListener(() => OnLetterButtonClicked(letter));
-            }
-            searchInputField.onEndEdit.AddListener(SearchWord);
-            seeMoreButton.onClick.AddListener(() => ResizeChildren());
+        // Find or add the VerticalLayoutGroup component
+        verticalLayoutGroup = GetComponentInChildren<VerticalLayoutGroup>();
+
 
     }
 
-        public void OnLetterButtonClicked(char letter)
+    public void Start()
+    {
+        for (char c = 'a'; c <= 'z'; c++)
         {
-            currentPage[letter] = 1;
-            StartCoroutine(FetchWordsForLetter(letter));
+            currentPage[char.ToLower(c)] = 1; ;
         }
-
-        public IEnumerator FetchWordsForLetter(char letter)
+        // Initialize currentPage dictionary with default page number for each letter
+        foreach (Button button in letterButtons)
         {
-            bool hasNext = true;
+            char letter = char.ToLower(button.GetComponentInChildren<TMP_Text>().text[0]); // Ensure lowercase letter
+            button.onClick.AddListener(() => OnLetterButtonClicked(letter));
+        }
+        searchInputField.onEndEdit.AddListener(SearchWord);
+        searchResultText = GameObject.Find("searchresult").GetComponent<TextMeshProUGUI>();
+        searchResultText.gameObject.SetActive(false); // Initially hide the search result text
+    }
 
-            while (hasNext)
+    public void OnLetterButtonClicked(char letter)
+    {
+        currentPage[letter] = 1;
+        StartCoroutine(FetchWordsForLetter(letter));
+    }
+
+    public IEnumerator FetchWordsForLetter(char letter)
+    {
+        bool hasNext = true;
+
+        while (hasNext)
+        {
+            // Prepare API URL with appropriate parameters for the clicked letter and current page
+            string apiUrl = $"{baseUrl}?page={currentPage[letter]}&per_page=30&q=&alphabet={letter}";
+
+            using (UnityWebRequest request = UnityWebRequest.Get(apiUrl))
             {
-                // Prepare API URL with appropriate parameters for the clicked letter and current page
-                string apiUrl = $"{baseUrl}?page={currentPage[letter]}&per_page=30&q=&alphabet={letter}";
+                yield return request.SendWebRequest();
 
-                using (UnityWebRequest request = UnityWebRequest.Get(apiUrl))
+                if (request.result == UnityWebRequest.Result.Success)
                 {
-                    yield return request.SendWebRequest();
+                    // Parse JSON response
+                    DictionaryResponse response = JsonUtility.FromJson<DictionaryResponse>(request.downloadHandler.text);
 
-                    if (request.result == UnityWebRequest.Result.Success)
+                    if (!allWordsDataForLetter.ContainsKey(letter))
                     {
-                        // Parse JSON response
-                        DictionaryResponse response = JsonUtility.FromJson<DictionaryResponse>(request.downloadHandler.text);
+                        allWordsDataForLetter[letter] = new List<DictionaryEntry>();
+                    }
+                    allWordsDataForLetter[letter].AddRange(response.data.list);
 
-                        // Clear existing word panels on the first page for the clicked letter
-                        if (currentPage[letter] == 1)
+                    // Clear existing word panels on the first page for the clicked letter
+                    if (currentPage[letter] == 1)
+                    {
+                        ClearContentPanel();
+                        allWords.Clear(); // Clear allWords list on the first page
+                    }
+                    allWords.AddRange(response.data.list);
+
+                    int wordCount = 0;
+                    foreach (DictionaryEntry entry in response.data.list)
+                    {
+                        if (wordCount % 3 == 0)
                         {
-                            foreach (Transform child in contentPanel)
+                            GameObject horizontalRow = Instantiate(horizontalRowPrefab, verticalLayoutParent);
+                        }
+                        Transform rowTransform = verticalLayoutParent.GetChild(verticalLayoutParent.childCount - 1); // Get the last row
+                        GameObject panelObject = rowTransform.GetChild(wordCount % 3).gameObject;
+                        SetWordAndMeaning(panelObject, entry.game.word, entry.game.meaning, false, "");
+                        wordCount++;
+
+                        if (wordCount >= response.data.list.Count)
+                        {
+                            // If we have reached the end of the words list, check hasNext
+                            if (!response.data.has_next)
                             {
-                                Destroy(child.gameObject);
+                                // If there's no next page and the last row is not filled completely, remove empty boxes
+                                int remainingBoxes = wordCount % 3;
+                                if (remainingBoxes > 0)
+                                {
+                                    for (int i = remainingBoxes; i < 3; i++)
+                                    {
+                                        Destroy(rowTransform.GetChild(i).gameObject);
+                                    }
+                                }
+                                hasNext = false;
                             }
-                        }
-                        allWords.AddRange(response.data.list);
-
-
-                        // Instantiate word panels for each word and meaning for the clicked letter
-                        foreach (DictionaryEntry entry in response.data.list)
-                        {
-                            GameObject panelObject = Instantiate(wordPanelPrefab, contentPanel);
-                            SetWordAndMeaning(panelObject, entry.game.word, entry.game.meaning);
-                        }
-
-                        // Increment page number if pagination is supported for the clicked letter
-                        if (response.data.has_next)
-                        {
-                            currentPage[letter]++;
-                        }
-                        else
-                        {
-                            // Set hasNext to false if there are no more pages for the clicked letter
-                            hasNext = false;
+                            break;
                         }
                     }
-                    else
-                    {
-                        Debug.LogError($"Failed to fetch data: {request.error}");
-                        // Break the loop if request fails
-                        break;
-                    }
+
+                    // Increment page number regardless of pagination
+                    currentPage[letter]++;
+                }
+                else
+                {
+                    Debug.LogError($"Failed to fetch data: {request.error}");
+                    // Break the loop if request fails
+                    break;
                 }
             }
         }
-        public void SearchWord(string searchTerm)
+    }
+
+    void ClearContentPanel()
+    {
+        foreach (Transform child in verticalLayoutParent)
         {
-            // Clear existing word panels
-            foreach (Transform child in contentPanel)
+            Destroy(child.gameObject);
+        }
+    }
+
+    public void SearchWord(string searchTerm)
+    {
+        ClearContentPanel();
+
+        searchTerm = searchTerm.ToLower(); // Convert search term to lowercase for case-insensitive search
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            verticalLayoutGroup.spacing = -20;
+            searchResultText.gameObject.SetActive(true);
+            searchResultText.text = $"Showing results with words containing '{searchTerm}'";
+            canvasRectTransform.anchoredPosition = new Vector2(canvasRectTransform.anchoredPosition.x, -1894.21f);
+
+            Scrollbar scrollbar = contentPanel.GetComponentInChildren<Scrollbar>();
+            if (scrollbar != null)
             {
-                Destroy(child.gameObject);
+                scrollbar.gameObject.SetActive(false);
             }
 
-            searchTerm = searchTerm.ToLower(); // Convert search term to lowercase for case-insensitive search
 
-            // Check if words starting with the search term's letter have been fetched
-            char searchLetter = searchTerm[0];
-            if (!currentPage.ContainsKey(searchLetter))
+            // Flag to track if any matching word is found
+            bool wordFound = false;
+
+            // Populate the content panel with search results
+            foreach (char letter in allWordsDataForLetter.Keys)
             {
-                // Fetch words for the search term's letter if they haven't been fetched yet
-                OnLetterButtonClicked(searchLetter);
-            }
-            else
-            {
-                // Check if the word list contains the searched word directly
-                bool wordFound = false;
-                foreach (DictionaryEntry entry in allWords)
+                foreach (DictionaryEntry entry in allWordsDataForLetter[letter])
                 {
                     if (entry.game.word.ToLower().Contains(searchTerm) || entry.game.meaning.ToLower().Contains(searchTerm))
                     {
-                        GameObject panelObject = Instantiate(wordPanelPrefab, contentPanel);
-                        SetWordAndMeaning(panelObject, entry.game.word, entry.game.meaning);
+                        GameObject horizontalRow = Instantiate(horizontalRowPrefab, verticalLayoutParent);
+                        GameObject panelObject = horizontalRow.transform.GetChild(0).gameObject; // Always use the first box in the row
+                        SetWordAndMeaning(panelObject, entry.game.word, entry.game.meaning, true, searchTerm); // Pass searchTerm to SetWordAndMeaning // Pass true to indicate it's a search result
                         wordFound = true; // Set flag to true once a match is found
-                        break; // Stop searching once a match is found
+                                          // Destroy the other two boxes in the horizontal row
+                        Destroy(horizontalRow.transform.GetChild(1).gameObject);
+                        Destroy(horizontalRow.transform.GetChild(2).gameObject);
                     }
                 }
+            }
+            // If no matching word is found, display a message
+            if (!wordFound)
+            {
+                GameObject horizontalRow = Instantiate(horizontalRowPrefab, verticalLayoutParent);
+                GameObject panelObject = horizontalRow.transform.GetChild(0).gameObject; // Always use the first box in the row
+                SetWordAndMeaning(panelObject, "Word not found", "", true, ""); // Display a message indicating word not found
 
-                if (!wordFound)
-                {
-                    // Fetch words for the search term's letter if the searched word is not found directly
-                    OnLetterButtonClicked(searchLetter);
-                }
+                // Destroy the other two boxes in the horizontal row
+                Destroy(horizontalRow.transform.GetChild(1).gameObject);
+                Destroy(horizontalRow.transform.GetChild(2).gameObject);
             }
         }
-
-        // Method to set the word and meaning texts on the instantiated panel
-        // Method to set the word and meaning texts on the instantiated panel
-        public void SetWordAndMeaning(GameObject panelObject, string word, string meaning)
+        else
         {
-            // Find the Text components directly in panelObject
-            TMP_Text wordText = panelObject.transform.Find("WordText")?.GetComponent<TMP_Text>();
-            TMP_Text meaningText = panelObject.transform.Find("MeaningText")?.GetComponent<TMP_Text>();
-            
+            verticalLayoutGroup.spacing = 10;
 
-            // Ensure that both WordText and MeaningText are found
-            if (wordText == null || meaningText == null)
+            searchResultText.gameObject.SetActive(false);
+            Scrollbar scrollbar = GetComponentInChildren<Scrollbar>();
+            if (scrollbar != null)
             {
-                Debug.LogError("WordText or MeaningText component not found in panelObject: " + panelObject.name);
-                return;
+                scrollbar.gameObject.SetActive(true);
             }
-
-            // Set the text values
-            wordText.text = word;
-            string formattedMeaning = FormatMeaningText(meaning, out bool isTruncated);
-            meaningText.text = formattedMeaning;
-            
-
+            canvasRectTransform.anchoredPosition = new Vector2(0.24997f, -1872.392f);
+        }
     }
 
-        public string FormatMeaningText(string meaning, out bool isTruncated)
-        {
-            // Split the meaning text into words
-            string[] words = meaning.Split(' ');
 
-            // Initialize variables
-            string formattedMeaning = "";
-            int wordCount = 0;
-            int lineCount = 0;
-            isTruncated = false;
 
-            // Iterate through each word
-            foreach (string word in words)
-            {
-                // Add the word to the formatted meaning text
-                formattedMeaning += word + " ";
-                wordCount++;
-
-                // Add a new line if maximum words per line (4) reached
-                if (wordCount >= 4)
-                {
-                    formattedMeaning += "\n";
-                    wordCount = 0;
-                    lineCount++;
-
-                    // Break loop if maximum lines (3) reached
-                    if (lineCount >= 3)
-                    {
-                        // Append ellipsis (...) if there are more words
-                        if (words.Length > wordCount)
-                        {
-                            formattedMeaning = formattedMeaning.TrimEnd() + " ...";
-                            isTruncated = true;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            return formattedMeaning;
-        }
-
-    // Method to expand the meaning panel to show full meaning text
-    //private void ExpandMeaningPanel(GameObject panelObject, TMP_Text meaningText)
-    //{
-    // Get the RectTransform of the word meaning box
-    // RectTransform panelRect = panelObject.GetComponent<RectTransform>();
-
-    // Set the preferred height of the meaning text
-    // float preferredHeight = meaningText.preferredHeight;
-
-    // Expand the height of the word meaning box
-    // panelRect.sizeDelta = new Vector2(panelRect.sizeDelta.x, preferredHeight);
-
-    // Toggle between truncated and full text
-    // ToggleTruncatedText(meaningText);
-    // }
-
-    void ResizeChildren()
+    // Method to set the word and meaning texts on the instantiated panel
+    public void SetWordAndMeaning(GameObject panelObject, string word, string meaning, bool isSearchResult, string searchterm)
     {
-        // Loop through each child of the grid layout group
-        foreach (RectTransform child in gridLayoutGroup.transform)
+        // Find the Text components directly in panelObject
+        TMP_Text wordText = panelObject.transform.Find("WordText")?.GetComponent<TMP_Text>();
+        TMP_Text meaningText = panelObject.transform.Find("MeaningText")?.GetComponent<TMP_Text>();
+
+        Button seeMoreButton = panelObject.transform.Find("SeeMoreButton")?.GetComponent<Button>();
+
+        // Ensure that both WordText and MeaningText are found
+        if (wordText == null || meaningText == null)
         {
-            // Adjust the height of the child
-            Vector2 newSize = child.sizeDelta;
-            newSize.y = newHeight;
-            child.sizeDelta = newSize;
+            Debug.LogError("WordText or MeaningText component not found in panelObject: " + panelObject.name);
+            return;
         }
 
-        // Optional: You may need to force a layout update
-        LayoutRebuilder.ForceRebuildLayoutImmediate(gridLayoutGroup.GetComponent<RectTransform>());
+        // Set the text values
+        wordText.text = word;
+
+        // Set the alignment of the word heading to left if it's a search result
+        if (isSearchResult)
+        {
+            wordText.alignment = TextAlignmentOptions.Left;
+            wordText.rectTransform.anchorMin = new Vector2(0, 1);
+            wordText.rectTransform.anchorMax = new Vector2(0, 1);
+            wordText.rectTransform.pivot = new Vector2(0, 1);
+        }
+        if(isSearchResult)
+        {
+            seeMoreButton.gameObject.SetActive(false);
+        }
+        string originalMeaning = meaning;
+
+        // Split the meaning into words
+        string[] words = meaning.Split(' ');
+
+        // Display the meaning text in a single line if it's a search result
+        if (isSearchResult)
+        {
+            meaningText.alignment = TextAlignmentOptions.Left;
+            meaningText.rectTransform.anchorMin = new Vector2(0, 0.5f); // Middle Left
+            meaningText.rectTransform.anchorMax = new Vector2(0, 0.5f); // Middle Left
+            meaningText.rectTransform.pivot = new Vector2(0, 0.5f); // Middle Left
+            meaningText.rectTransform.sizeDelta = new Vector2(655.43f, meaningText.rectTransform.sizeDelta.y);
+            meaningText.text = string.Join(" ", words);
+            string highlightedMeaning = HighlightSearchTerm(meaning, searchterm);
+            meaningText.text = highlightedMeaning;
+        }
+            List<string> lines = new List<string>();
+
+            // Arrange words into lines with maximum four words per line
+            for (int i = 0; i < words.Length; i += 4)
+            {
+                int wordCount = Mathf.Min(4, words.Length - i);
+                string line = string.Join(" ", words, i, wordCount);
+                lines.Add(line);
+            }
+
+            // Limit the number of lines to three
+            if (lines.Count > 3)
+            {
+                lines.RemoveRange(3, lines.Count - 3);
+                lines[2] += "..."; // Add ellipsis to the end of the third line
+                seeMoreButton.gameObject.SetActive(true);
+                // Add an event listener to the See More button
+                seeMoreButton.onClick.AddListener(() => OnSeeMoreClicked(panelObject, originalMeaning));
+            }
+            else
+            {
+                // Hide the See More button
+                seeMoreButton.gameObject.SetActive(false);
+            }
+
+            // Set the meaning text
+            meaningText.text = string.Join("\n", lines);
+
+            float lineHeight = meaningText.fontSize * meaningText.lineSpacing;
+            float height = lines.Count * lineHeight;
+            meaningText.rectTransform.sizeDelta = new Vector2(meaningText.rectTransform.sizeDelta.x, height);
+        
     }
-    public void UpdateScrollRect()
+    private string HighlightSearchTerm(string text, string searchTerm)
+    {
+        if (string.IsNullOrEmpty(searchTerm))
         {
-            // Get the size of the content panel
-            RectTransform contentRect = contentPanel.GetComponent<RectTransform>();
-            Vector2 contentSize = new Vector2(contentRect.rect.width, contentRect.rect.height);
-
-            // Update the Scroll Rect component with the new content size
-            ScrollRect scrollRect = contentPanel.parent.GetComponent<ScrollRect>();
-            scrollRect.content.sizeDelta = contentSize;
+            return text;
         }
 
-    // Call this method after dynamically adding content
+        string[] words = text.Split(' ');
+        for (int i = 0; i < words.Length; i++)
+        {
+            if (words[i].ToLower().Contains(searchTerm))
+            {
+                words[i] = "<color=yellow>" + words[i] + "</color>";
+            }
+        }
+
+        return string.Join(" ", words);
+    }
 
 
+    private void OnSeeMoreClicked(GameObject panelObject, string fullMeaning)
+    {
+        TMP_Text meaningText = panelObject.transform.Find("MeaningText")?.GetComponent<TMP_Text>();
+        Button seeMoreButton = panelObject.transform.Find("SeeMoreButton")?.GetComponent<Button>();
+        Button seeLessButton = panelObject.transform.Find("SeeLessButton")?.GetComponent<Button>();
 
+        if (meaningText == null || seeMoreButton == null)
+        {
+            Debug.LogError("MeaningText or SeeMoreButton component not found in panelObject: " + panelObject.name);
+            return;
+        }
+
+        meaningText.text = fullMeaning;
+
+        // Change the property of the content size fitter to preferred size
+        ContentSizeFitter contentSizeFitter = panelObject.GetComponent<ContentSizeFitter>();
+        if (contentSizeFitter != null)
+        {
+            contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
+
+        // Hide the See More button after expanding
+        seeLessButton.gameObject.SetActive(true);
+        seeMoreButton.gameObject.SetActive(false);
+
+        seeLessButton.onClick.AddListener(() => OnSeeLessClicked(panelObject));
+        Debug.Log("See More button clicked for panel: " + panelObject.name);
+
+    }
+
+    private void OnSeeLessClicked(GameObject panelObject)
+    {
+        TMP_Text meaningText = panelObject.transform.Find("MeaningText")?.GetComponent<TMP_Text>();
+        Button seeMoreButton = panelObject.transform.Find("SeeMoreButton")?.GetComponent<Button>();
+        Button seeLessButton = panelObject.transform.Find("SeeLessButton")?.GetComponent<Button>();
+
+        if (meaningText == null || seeMoreButton == null || seeLessButton == null)
+        {
+            Debug.LogError("MeaningText, SeeMoreButton, or SeeLessButton component not found in panelObject: " + panelObject.name);
+            return;
+        }
+        string[] words = meaningText.text.Split(' ');
+        List<string> lines = new List<string>();
+
+        // Arrange words into lines with maximum four words per line
+        for (int i = 0; i < words.Length; i += 4)
+        {
+            int wordCount = Mathf.Min(4, words.Length - i);
+            string line = string.Join(" ", words, i, wordCount);
+            lines.Add(line);
+        }
+
+        // Limit the number of lines to three
+        if (lines.Count > 3)
+        {
+            lines.RemoveRange(3, lines.Count - 3);
+            lines[2] += "..."; // Add ellipsis to the end of the third line
+            
+        }
+
+        // Set the meaning text
+        meaningText.text = string.Join("\n", lines);
+        RectTransform meaningRectTransform = meaningText.rectTransform;
+        meaningRectTransform.sizeDelta = new Vector2(183f, 54f); // Adjust width and height as needed
+
+        // Change the property of the content size fitter back to unconstrained
+        ContentSizeFitter contentSizeFitter = panelObject.GetComponent<ContentSizeFitter>();
+        if (contentSizeFitter != null)
+        {
+            contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+        }
+
+        // Hide the See Less button and show the See More button after collapsing
+        seeLessButton.gameObject.SetActive(false);
+        seeMoreButton.gameObject.SetActive(true);
+
+        Debug.Log("See Less button clicked for panel: " + panelObject.name);
+    }
 }
 
+[System.Serializable]
+public class DictionaryResponse
+{
+    public DictionaryData data;
+}
 
+[System.Serializable]
+public class DictionaryData
+{
+    public List<DictionaryEntry> list;
+    public bool has_next;
+}
 
+[System.Serializable]
+public class DictionaryEntry
+{
+    public GameData game;
+}
 
-    [System.Serializable]
-    public class DictionaryResponse
-    {
-        public DictionaryData data;
-    }
-
-    [System.Serializable]
-    public class DictionaryData
-    {
-        public List<DictionaryEntry> list;
-        public bool has_next;
-    }
-
-    [System.Serializable]
-    public class DictionaryEntry
-    {
-        public GameData game;
-    }
-
-    [System.Serializable]
-    public class GameData
-    {
-        public string word;
-        public string meaning;
-    }
+[System.Serializable]
+public class GameData
+{
+    public string word;
+    public string meaning;
+}

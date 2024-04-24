@@ -1,17 +1,17 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\git dict app\\dictionary-app\\",
+  "WorkspaceRootPath": "D:\\ace plus\\dictionary-app\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|D:\\git dict app\\dictionary-app\\assets\\scripts\\dictionarymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|d:\\ace plus\\dictionary-app\\assets\\scripts\\dictionarymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\dictionarymanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|d:\\git dict app\\dictionary-app\\assets\\scripts\\seemorebutton.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|D:\\ace plus\\dictionary-app\\assets\\scripts\\seemorebutton.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\seemorebutton.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|D:\\git dict app\\dictionary-app\\assets\\scripts\\scrollbarcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|D:\\ace plus\\dictionary-app\\assets\\scripts\\scrollbarcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E608580E-128E-E31E-1239-E1C467D994D3}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\scrollbarcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -28,9 +28,9 @@
               "$type": "Document",
               "DocumentIndex": 2,
               "Title": "ScrollbarController.cs",
-              "DocumentMoniker": "D:\\git dict app\\dictionary-app\\Assets\\Scripts\\ScrollbarController.cs",
+              "DocumentMoniker": "D:\\ace plus\\dictionary-app\\Assets\\Scripts\\ScrollbarController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\ScrollbarController.cs",
-              "ToolTip": "D:\\git dict app\\dictionary-app\\Assets\\Scripts\\ScrollbarController.cs",
+              "ToolTip": "D:\\ace plus\\dictionary-app\\Assets\\Scripts\\ScrollbarController.cs",
               "RelativeToolTip": "Assets\\Scripts\\ScrollbarController.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAADYAAABAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -40,11 +40,11 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "DictionaryManager.cs",
-              "DocumentMoniker": "D:\\git dict app\\dictionary-app\\Assets\\Scripts\\DictionaryManager.cs",
+              "DocumentMoniker": "D:\\ace plus\\dictionary-app\\Assets\\Scripts\\DictionaryManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\DictionaryManager.cs",
-              "ToolTip": "D:\\git dict app\\dictionary-app\\Assets\\Scripts\\DictionaryManager.cs",
+              "ToolTip": "D:\\ace plus\\dictionary-app\\Assets\\Scripts\\DictionaryManager.cs",
               "RelativeToolTip": "Assets\\Scripts\\DictionaryManager.cs",
-              "ViewState": "AQIAAEYAAAAAAAAAAADwv98AAAAZAAAA",
+              "ViewState": "AQIAAPgAAAAAAAAAAAAqwCMBAAAIAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-04-08T12:44:46.859Z",
               "EditorCaption": ""
@@ -53,14 +53,13 @@
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "seemorebutton.cs",
-              "DocumentMoniker": "D:\\git dict app\\dictionary-app\\Assets\\Scripts\\seemorebutton.cs",
+              "DocumentMoniker": "D:\\ace plus\\dictionary-app\\Assets\\Scripts\\seemorebutton.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\seemorebutton.cs",
-              "ToolTip": "D:\\git dict app\\dictionary-app\\Assets\\Scripts\\seemorebutton.cs",
+              "ToolTip": "D:\\ace plus\\dictionary-app\\Assets\\Scripts\\seemorebutton.cs",
               "RelativeToolTip": "Assets\\Scripts\\seemorebutton.cs",
               "ViewState": "AQIAAAgAAAAAAAAAAAAAwDAAAAAFAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-04-15T20:08:14.941Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-04-15T20:08:14.941Z"
             }
           ]
         }
